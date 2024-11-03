@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Tracking App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Basic styling for the clock and calendar */
+        #clock {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        #calendar {
+            margin: 20px 0;
+        }
+        .hidden {
+            display: none;
+        }
+        .transaction-page {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .calendar-container {
+            width: 50%;
+        }
+        .transaction-container {
+            width: 45%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-wallet"></i> Financial Tracker</h1>
+        <div id="clock"></div>
+    </header>
+
+    <section class="show" id="login-section">
+        <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
+        <form id="login-form">
+            <input type="email" placeholder="Email" required>
+            <input type="password" placeholder="Password" required>
+            <button type="submit"><i class="fas fa-sign-in-alt"></i> Login</button>
+            <p><a href="#forgot-password" onclick="showSection('forgot-password')">Forgot Password?</a></p>
+            <p>Don't have an account? <a href="#signup-form" onclick="showSection('signup-section')">Sign Up</a></p>
+        </form>
+    </section>
+
+    <section class="hidden" id="signup-section">
+        <h2><i class="fas fa-user-plus"></i> Sign Up</h2>
+        <form id="signup-form">
+            <input type="text" placeholder="Full Name" required>
+            <input type="email" placeholder="Email" required>
+            <input type="password" placeholder="Password" required>
+            <button type="submit"><i class="fas fa-user-plus"></i> Sign Up</button>
+        </form>
+    </section>
+
+    <section class="hidden" id="forgot-password">
+        <h2><i class="fas fa-key"></i> Forgot Password</h2>
+        <form id="forgot-form">
+            <input type="email" placeholder="Enter your email" required>
+            <button type="submit"><i class="fas fa-paper-plane"></i> Send OTP</button>
+        </form>
+    </section>
+
+    <section class="hidden" id="add-user-section">
+        <h2><i class="fas fa-user-plus"></i> Add New User</h2>
+        <form id="add-user-form">
+            <input type="text" id="user-name" placeholder="User Name" required>
+            <input type="tel" id="user-phone" placeholder="Phone Number" required>
+            <input type="number" id="user-amount" placeholder="Amount Owed" required>
+            <button type="submit"><i class="fas fa-user-plus"></i> Add User</button>
+        </form>
+        <ul id="customer-list"></ul>
+    </section>
+
+    <section class="hidden" id="modify-user-section">
+        <h2><i class="fas fa-user-edit"></i> Modify Customer Details</h2>
+        <form id="modify-user-form">
+            <input type="text" id="modify-user-id" placeholder="User ID" required>
+            <input type="text" id="modify-user-name" placeholder="New User Name">
+            <input type="tel" id="modify-user-phone" placeholder="New Phone Number">
+            <input type="number" id="modify-user-amount" placeholder="New Amount Owed">
+            <button type="submit"><i class="fas fa-user-edit"></i> Update User</button>
+        </form>
+    </section>
+
+    <section class="hidden" id="transaction-section">
+        <h2><i class="fas fa-list"></i> Daily Transactions</h2>
+        <div class="transaction-page">
+            <div class="calendar-container">
+                <input type="date" id="calendar" onchange="loadTransactionsForDate(this.value)">
+                <h3>Selected Date: <span id="selected-date"></span></h3>
+            </div>
+            <div class="transaction-container">
+                <form id="transaction-form">
+                    <input type="text" id="transaction-desc" placeholder="Transaction Description" required>
+                    <input type="text" id="transaction-category" placeholder="Category" required>
+                    <input type="number" id="transaction-amount" placeholder="Amount" required>
+                    <button type="submit"><i class="fas fa-plus"></i> Add Transaction</button>
+                </form>
+                <ul id="transaction-list"></ul>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Financial Tracker. All rights reserved.</p>
+    </footer>
+
+    <script>
+        let customers = [];
+        let transactions = [];
+
+        // Function to show a specific section
+        function showSection(sectionId) {
+            const sections = ['login-section', 'signup-section', 'forgot-password', 'add-user-section', 'modify-user-section', 'transaction-section'];
+            sections.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // Update the clock every second
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString();
+        }
+
+        setInterval(updateClock, 1000); // Update clock every second
+
+        // Login form handling
+        const loginForm = document.getElementById('login-form');
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            alert('Logging in...');
+            showSection('add-user-section'); // Show the add user section after login
+        });
+
+        // Sign up form handling
+        const signupForm = document.getElementById('signup-form');
+        signupForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            alert('Signing up...');
+            showSection('login-section'); // Return to login after signup
+        });
+
+        // Forgot password handling
+        const forgotForm = document.getElementById('forgot-form');
+        forgotForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            alert('OTP sent to your email.');
+            showSection('login-section'); // Return to login after sending OTP
+        });
+
+        // Add user form handling
+        const addUserForm = document.getElementById('add-user-form');
+        addUserForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const userName = document.getElementById('user-name').value;
+            const userPhone = document.getElementById('user-phone').value;
+            const userAmount = document.getElementById('user-amount').value;
+
+            const newUser = { id: Date.now(), name: userName, phone: userPhone, amount: userAmount, addedAt: new Date().toLocaleString() };
+            customers.push(newUser);
+            displayCustomers();
+            addUserForm.reset();
+        });
+
+        // Display customers
+        function displayCustomers() {
+            const customerList = document.getElementById('customer-list');
+            customerList.innerHTML = '';
+            customers.forEach(customer => {
+                const li = document.createElement('li');
+                li.textContent = `${customer.name} - Phone: ${customer.phone}, Amount Owed: $${customer.amount} (Added on: ${customer.addedAt})`;
+                li.appendChild(createEditButton(customer.id));
+                customerList.appendChild(li);
+            });
+        }
+
+        // Create edit button
+        function createEditButton(customerId) {
+            const button = document.createElement('button');
+            button.textContent = 'Edit';
+            button.onclick = () => editCustomer(customerId);
+            return button;
+        }
+
+        // Edit customer
+        function editCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (customer) {
+                document.getElementById('modify-user-id').value = customerId;
+                document.getElementById('modify-user-name').value = customer.name;
+                document.getElementById('modify-user-phone').value = customer.phone;
+                document.getElementById('modify-user-amount').value = customer.amount;
+                showSection('modify-user-section');
+            }
+        }
+
+        // Modify user form handling
+        const modifyUserForm = document.getElementById('modify-user-form');
+        modifyUserForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const userId = document.getElementById('modify-user-id').value;
+            const userName = document.getElementById('modify-user-name').value;
+            const userPhone = document.getElementById('modify-user-phone').value;
+            const userAmount = document.getElementById('modify-user-amount').value;
+
+            const customerIndex = customers.findIndex(c => c.id == userId);
+            if (customerIndex >= 0) {
+                customers[customerIndex] = { ...customers[customerIndex], name: userName, phone: userPhone, amount: userAmount };
+                displayCustomers();
+                modifyUserForm.reset();
+                showSection('add-user-section');
+            }
+        });
+
+        // Transaction form handling
+        const transactionForm = document.getElementById('transaction-form');
+        transactionForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const transactionDesc = document.getElementById('transaction-desc').value;
+            const transactionCategory = document.getElementById('transaction-category').value;
+            const transactionAmount = document.getElementById('transaction-amount').value;
+            const transactionDate = document.getElementById('calendar').value;
+
+            const newTransaction = { id: Date.now(), description: transactionDesc, category: transactionCategory, amount: transactionAmount, date: transactionDate };
+            transactions.push(newTransaction);
+            displayTransactions();
+            transactionForm.reset();
+        });
+
+        // Display transactions for selected date
+        function loadTransactionsForDate(date) {
+            document.getElementById('selected-date').textContent = date || 'Select a date';
+            displayTransactions(date);
+        }
+
+        // Display transactions
+        function displayTransactions(selectedDate = '') {
+            const transactionList = document.getElementById('transaction-list');
+            transactionList.innerHTML = '';
+            transactions
+                .filter(t => (selectedDate ? t.date === selectedDate : true))
+                .forEach(transaction => {
+                    const li = document.createElement('li');
+                    li.textContent = `${transaction.date} - ${transaction.description} (${transaction.category}): $${transaction.amount}`;
+                    transactionList.appendChild(li);
+                });
+        }
+    </script>
+</body>
+</html>
